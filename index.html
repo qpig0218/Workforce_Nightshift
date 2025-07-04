@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>住院醫師工時改革互動式儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Background: Slate-50, Text: Slate-800, Accent: Teal-600) -->
+    <!-- Application Structure Plan: A single-page application that simulates a multi-page experience using a horizontal slider. The main content area is a flex container holding full-width content "pages". Navigation clicks trigger a CSS transform to slide the container left or right, showing only the relevant page. This structure provides a focused, app-like user experience, preventing cognitive overload from a long scroll and creating clear thematic separation. -->
+    <!-- Visualization & Content Choices: 1) Patient Safety vs. Well-being: Goal: Compare outcomes. Method: Side-by-side text summaries with a Donut chart (Chart.js) for burnout rate. Justification: Quickly highlights the central conflict. 2) Solutions: Goal: Organize strategies. Method: Interactive HTML/CSS tabs/cards for scheduling models and a custom HTML/CSS stepper for SBAR/I-PASS diagrams. Justification: Breaks down complex solutions into manageable, explorable pieces. 3) Policy Comparison: Goal: Compare international regulations. Method: Interactive Bar chart (Chart.js) linked to JS-driven dynamic text content for regional details. Justification: Provides a high-level visual comparison followed by a user-directed deep dive. 4) Education: Goal: Show change over time. Method: HTML/CSS process flow diagram. Justification: Visually represents the conceptual shift in training philosophy. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .nav-link {
+            cursor: pointer;
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d9488;
+            border-bottom-color: #0d9488;
+        }
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .tab-button.active {
+            background-color: #0d9488;
+            color: white;
+        }
+        .policy-button.active {
+            background-color: #14b8a6;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        .main-container {
+            height: calc(100vh - 4rem); 
+            overflow-y: auto;
+        }
+        .page-container {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+        }
+        .page {
+            width: 100%;
+            flex-shrink: 0;
+            height: 100%;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+        }
+        @media (min-width: 768px) {
+            .page {
+                padding: 3rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 flex flex-col">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 flex-shrink-0">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-teal-700">住院醫師工時改革儀表板</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4 nav-container">
+                        <button data-target="dilemma" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 border-b-2 border-transparent">核心影響</button>
+                        <button data-target="solutions" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 border-b-2 border-transparent">解決方案</button>
+                        <button data-target="policies" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 border-b-2 border-transparent">各國政策</button>
+                        <button data-target="education" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 border-b-2 border-transparent">教育轉型</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow overflow-hidden">
+        <div id="page-container" class="page-container">
+            
+            <section id="dilemma" class="page">
+                <div class="container mx-auto">
+                    <div class="max-w-5xl mx-auto">
+                        <h3 class="text-2xl font-bold text-center text-slate-800 mb-2">核心影響：安全與福祉的兩難</h3>
+                        <p class="text-center text-slate-600 mb-10">工時改革旨在提升病人安全與醫師福祉，但研究顯示其影響並非單向。這是一個在安全、福祉與訓練品質間尋求平衡的複雜議題。</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h4 class="text-xl font-bold text-teal-700 mb-4 flex items-center"><span class="text-2xl mr-2">🩺</span> 病人安全：未見顯著改變</h4>
+                                <p class="text-slate-600 mb-4">多項大型研究（如FIRST、iCOMPARE試驗）指出，縮短工時對病患的死亡率、併發症等主要臨床結果**並未帶來顯著改善**。這可能因為縮短輪班雖減少醫師疲勞，卻也增加了交班頻率，帶來新的資訊傳遞風險。</p>
+                                <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded-r-lg">
+                                    <p class="font-bold">關鍵警訊</p>
+                                    <p>儘管如此，研究證實**極端超時工作**（如每週 > 60小時）仍顯著增加導致病人死亡的醫療錯誤風險。因此，工時上限是必要的安全底線。</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h4 class="text-xl font-bold text-teal-700 mb-4 flex items-center"><span class="text-2xl mr-2">🧠</span> 醫師福祉：顯著正面效益</h4>
+                                <p class="text-slate-600 mb-4">工時改革對醫師的身心健康有明確的正面影響，能顯著改善睡眠、降低疲勞與情緒耗竭。然而，住院醫師的倦怠問題依然嚴峻。</p>
+                                <div class="chart-container h-56 max-w-sm">
+                                    <canvas id="burnoutChart"></canvas>
+                                </div>
+                                <p class="text-center text-sm text-slate-500 mt-2">全球住院醫師倦怠 (Burnout) 盛行率估計仍超過五成。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="solutions" class="page">
+                 <div class="container mx-auto">
+                    <div class="max-w-5xl mx-auto">
+                        <h3 class="text-2xl font-bold text-center text-slate-800 mb-2">解決方案：創新的工具與策略</h3>
+                        <p class="text-center text-slate-600 mb-10">為應對工時限制帶來的挑戰，醫療體系發展出多元的排班模式與標準化的交班工具，以兼顧醫療品質、醫師休息與訓練需求。</p>
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <div class="border-b border-slate-200 mb-4">
+                                <nav class="-mb-px flex space-x-6" id="solutionsTabs">
+                                    <button data-tab="scheduling" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">創新排班模式</button>
+                                    <button data-tab="handoff" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">優化交班策略</button>
+                                </nav>
+                            </div>
+                            <div id="solutionsContent" class="fade-in"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="policies" class="page">
+                <div class="container mx-auto">
+                    <div class="max-w-5xl mx-auto">
+                        <h3 class="text-2xl font-bold text-center text-slate-800 mb-2">各國政策：比較與挑戰</h3>
+                        <p class="text-center text-slate-600 mb-10">臺灣、美國、歐洲雖都走向工時改革，但其法源、規範與挑戰各異。點擊下方按鈕，探索不同地區的政策細節。</p>
+                        <div class="grid lg:grid-cols-3 gap-8">
+                            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md">
+                                <h4 class="text-xl font-bold text-slate-800 mb-4">核心工時規範比較 (週)</h4>
+                                <div class="chart-container h-64">
+                                    <canvas id="policyChart"></canvas>
+                                </div>
+                                <p class="text-sm text-slate-500 mt-4">* 臺灣與美國為平均每週80小時，歐洲為48小時。</p>
+                            </div>
+                            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                                <div class="flex flex-wrap gap-2 mb-4" id="policyButtons">
+                                    <button data-policy="tw" class="policy-button flex-grow sm:flex-grow-0 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-all duration-200">🇹🇼 臺灣</button>
+                                    <button data-policy="us" class="policy-button flex-grow sm:flex-grow-0 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-all duration-200">🇺🇸 美國</button>
+                                    <button data-policy="eu" class="policy-button flex-grow sm:flex-grow-0 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-all duration-200">🇪🇺 歐洲</button>
+                                </div>
+                                <div id="policyDetails" class="fade-in"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="education" class="page">
+                <div class="container mx-auto">
+                    <div class="max-w-5xl mx-auto">
+                        <h3 class="text-2xl font-bold text-center text-slate-800 mb-2">教育轉型：從時間到價值的演進</h3>
+                        <p class="text-center text-slate-600 mb-10">工時縮減迫使醫學教育從傳統「以量取勝」的模式，轉向強調「高效學習」與「能力導向」的新典範。</p>
+                        <div class="bg-white rounded-xl shadow-md p-8">
+                            <div class="relative">
+                                <div class="absolute left-1/2 -ml-0.5 w-1 h-full bg-teal-200 hidden md:block"></div>
+                                <div class="space-y-12">
+                                    <div class="md:flex items-center md:space-x-8">
+                                        <div class="md:w-1/2">
+                                            <div class="bg-teal-600 text-white p-6 rounded-lg shadow-lg">
+                                                <h4 class="text-xl font-bold mb-2">傳統模式：長時間浸泡</h4>
+                                                <ul class="list-disc list-inside space-y-1">
+                                                    <li>以工時長短作為投入指標</li>
+                                                    <li>強調從大量重複的臨床工作中學習</li>
+                                                    <li>個人責任制，英雄主義文化</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="hidden md:block w-8 h-8 bg-white border-4 border-teal-600 rounded-full z-10 mx-auto"></div>
+                                        <div class="md:w-1/2 mt-4 md:mt-0"></div>
+                                    </div>
+                                    
+                                    <div class="text-center my-4">
+                                        <span class="text-4xl text-teal-600">⬇️</span>
+                                    </div>
+
+                                    <div class="md:flex flex-row-reverse items-center md:space-x-8 md:space-x-reverse">
+                                        <div class="md:w-1/2">
+                                            <div class="bg-slate-700 text-white p-6 rounded-lg shadow-lg">
+                                                <h4 class="text-xl font-bold mb-2">現代模式：高效學習</h4>
+                                                <ul class="list-disc list-inside space-y-1">
+                                                    <li>強調團隊合作與效率</li>
+                                                    <li>聚焦高價值的臨床學習活動</li>
+                                                    <li>運用模擬訓練補足經驗</li>
+                                                    <li>採納能力導向的評估指標</li>
+                                                    <li>善用AI輔助，培養提問、自學與思辨能力</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                         <div class="hidden md:block w-8 h-8 bg-white border-4 border-slate-700 rounded-full z-10 mx-auto"></div>
+                                        <div class="md:w-1/2 mt-4 md:mt-0"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const solutionsData = {
+        scheduling: `
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h5 class="font-bold text-lg text-slate-800 mb-2">夜班浮動制 (Night Float)</h5>
+                    <p class="text-slate-600">最主流的模式。由一組專門團隊負責連續數晚的夜間值班，讓白天團隊能完整休息。有效符合工時規範，但需強化交班以確保照護連續性。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h5 class="font-bold text-lg text-slate-800 mb-2">夜間教學主治醫師 (Nocturnist)</h5>
+                    <p class="text-slate-600">夜班制的進階版，由資深主治醫師專職負責夜間照護與教學，能同時提升醫療品質與住院醫師的學習成效。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h5 class="font-bold text-lg text-slate-800 mb-2">彈性與補休制度</h5>
+                    <p class="text-slate-600">如臺灣常見的「PM off」(值班後隔日中午下班)，或在夜班中安排「策略性小睡」，有助於生理恢復與維持警覺性。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h5 class="font-bold text-lg text-slate-800 mb-2">團隊任務分工</h5>
+                    <p class="text-slate-600">將住院醫師從行政或非核心醫療事務中解放，由護理師或醫師助理分擔，使其能專注於高價值的臨床學習。</p>
+                </div>
+            </div>`,
+        handoff: `
+            <div>
+                <p class="mb-6 text-slate-600">隨著輪班制普及，高品質的交班是維繫病人安全的關鍵。結構化溝通模型能確保資訊傳遞的完整與精確。</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h5 class="font-bold text-lg text-slate-800 mb-2">SBAR 模型</h5>
+                        <p class="text-sm text-slate-500 mb-4">適用於緊急或重點式溝通的簡潔工具。</p>
+                        <div class="space-y-3">
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold mr-3">S</div><div><strong class="text-slate-700">Situation (情況):</strong> 核心問題是什麼？</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold mr-3">B</div><div><strong class="text-slate-700">Background (背景):</strong> 相關的簡要病史。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold mr-3">A</div><div><strong class="text-slate-700">Assessment (評估):</strong> 你對情況的判斷。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold mr-3">R</div><div><strong class="text-slate-700">Recommendation (建議):</strong> 需要採取的行動。</div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-lg text-slate-800 mb-2">I-PASS 模型</h5>
+                        <p class="text-sm text-slate-500 mb-4">專為團隊換班設計的全面性交班方案。</p>
+                         <div class="space-y-3">
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold mr-3">I</div><div><strong class="text-slate-700">Illness Severity:</strong> 疾病嚴重度分級。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold mr-3">P</div><div><strong class="text-slate-700">Patient Summary:</strong> 患者摘要。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold mr-3">A</div><div><strong class="text-slate-700">Action List:</strong> 行動項目清單。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold mr-3">S</div><div><strong class="text-slate-700">Situation Awareness:</strong> 情境意識與備案。</div></div>
+                            <div class="flex items-start"><div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold mr-3">S</div><div><strong class="text-slate-700">Synthesis by Receiver:</strong> 接收者覆述確認。</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`
+    };
+
+    const policyData = {
+        tw: {
+            title: "🇹🇼 臺灣",
+            content: `
+                <ul class="list-disc list-inside space-y-2 text-slate-600">
+                    <li><strong>法源基礎：</strong>《勞動基準法》第84-1條，由政府立法強制推行。</li>
+                    <li><strong>核心規範：</strong>每4週工時上限320小時，單次連續執勤不超過28小時，兩班間隔至少10小時。</li>
+                    <li><strong>適用對象：</strong>PGY及各專科住院醫師 (不含主治醫師)。</li>
+                    <li><strong>主要挑戰：</strong>壓力可能轉嫁至未受保障的主治醫師、五大科與偏鄉人力缺口、對訓練品質的擔憂。</li>
+                </ul>`
+        },
+        us: {
+            title: "🇺🇸 美國",
+            content: `
+                <ul class="list-disc list-inside space-y-2 text-slate-600">
+                    <li><strong>法源基礎：</strong>ACGME專業規範，屬專業團體自律。</li>
+                    <li><strong>核心規範：</strong>每週工時上限80小時(4週平均)，單次輪班不超過24+4小時。</li>
+                    <li><strong>政策彈性：</strong>根據實證研究動態調整，如2017年放寬實習醫師工時限制。</li>
+                    <li><strong>主要挑戰：</strong>醫院合規性問題、對病人安全效益不明顯、對外科等操作型專科訓練的衝擊。</li>
+                </ul>`
+        },
+        eu: {
+            title: "🇪🇺 歐洲",
+            content: `
+                 <ul class="list-disc list-inside space-y-2 text-slate-600">
+                    <li><strong>法源基礎：</strong>歐盟《工作時間指令》(EWTD)，為適用所有勞工的法律指令。</li>
+                    <li><strong>核心規範：</strong>每週工時上限48小時(含加班)，每日需有連續11小時休息。</li>
+                    <li><strong>政策彈性：</strong>允許醫師簽署「自願退出(Opt-out)」條款以豁免工時上限。</li>
+                    <li><strong>主要挑戰：</strong>因人力不足導致普遍違規、訓練總時數銳減引發對醫師能力的擔憂、法律與現實脫節。</li>
+                </ul>`
+        }
+    };
+    
+    // Chart initializations
+    const burnoutCtx = document.getElementById('burnoutChart').getContext('2d');
+    new Chart(burnoutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['倦怠', '非倦怠'],
+            datasets: [{
+                data: [52, 48],
+                backgroundColor: ['#f43f5e', '#a3e635'],
+                borderColor: ['#ffffff'],
+                borderWidth: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 20, padding: 15, font: { size: 12 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return context.label + ': ' + context.parsed + '%'; }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    const policyCtx = document.getElementById('policyChart').getContext('2d');
+    new Chart(policyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['臺灣', '美國', '歐洲'],
+            datasets: [{
+                label: '每週工時上限 (小時)',
+                data: [80, 80, 48],
+                backgroundColor: ['#2dd4bf', '#60a5fa', '#facc15'],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: { beginAtZero: true, grid: { display: false } },
+                y: { grid: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Solutions Tab Logic
+    const solutionsTabs = document.getElementById('solutionsTabs');
+    const solutionsContent = document.getElementById('solutionsContent');
+    
+    function updateSolutionsTab(tabName) {
+        solutionsContent.innerHTML = solutionsData[tabName];
+        solutionsContent.classList.remove('fade-in');
+        void solutionsContent.offsetWidth; 
+        solutionsContent.classList.add('fade-in');
+
+        Array.from(solutionsTabs.children).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+    }
+
+    solutionsTabs.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            updateSolutionsTab(e.target.dataset.tab);
+        }
+    });
+    
+    updateSolutionsTab('scheduling');
+    
+    // Policy Details Logic
+    const policyButtons = document.getElementById('policyButtons');
+    const policyDetails = document.getElementById('policyDetails');
+    
+    function updatePolicyDetails(policyName) {
+        policyDetails.innerHTML = `
+            <h5 class="font-bold text-lg text-slate-800 mb-3">${policyData[policyName].title}</h5>
+            ${policyData[policyName].content}
+        `;
+        policyDetails.classList.remove('fade-in');
+        void policyDetails.offsetWidth;
+        policyDetails.classList.add('fade-in');
+
+        Array.from(policyButtons.children).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.policy === policyName);
+        });
+    }
+
+    policyButtons.addEventListener('click', (e) => {
+        if(e.target.tagName === 'BUTTON') {
+            updatePolicyDetails(e.target.dataset.policy);
+        }
+    });
+
+    updatePolicyDetails('tw');
+
+    // Page Navigation Logic
+    const navContainer = document.querySelector('.nav-container');
+    const pageContainer = document.getElementById('page-container');
+    const pages = document.querySelectorAll('.page');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function navigateToPage(pageIndex) {
+        pageContainer.style.transform = `translateX(-${pageIndex * 100}%)`;
+        navLinks.forEach((link, index) => {
+            link.classList.toggle('active', index === pageIndex);
+        });
+    }
+
+    navContainer.addEventListener('click', (e) => {
+        const navLink = e.target.closest('.nav-link');
+        if (navLink) {
+            const targetId = navLink.dataset.target;
+            const targetPage = document.getElementById(targetId);
+            const pageIndex = Array.from(pages).indexOf(targetPage);
+            if (pageIndex !== -1) {
+                navigateToPage(pageIndex);
+            }
+        }
+    });
+
+    // Set initial state
+    navigateToPage(0);
+
+});
+</script>
+
+</body>
+</html>
