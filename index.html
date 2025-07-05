@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>住院醫師工時改革互動式儀表板</title>
+    <title>住院醫師工時改革相關文獻</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,6 +32,14 @@
         .nav-link:hover, .nav-link.active {
             color: #0d9488;
             border-bottom-color: #0d9488;
+        }
+        .mobile-nav-link {
+            cursor: pointer;
+            transition: color 0.3s, background-color 0.3s;
+        }
+        .mobile-nav-link.active {
+            color: #0d9488;
+            background-color: #f1f5f9;
         }
         .tab-button {
             transition: background-color 0.3s, color 0.3s;
@@ -85,8 +93,17 @@
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex-shrink-0">
-                    <h1 class="text-xl md:text-2xl font-bold text-teal-700">住院醫師工時改革儀表板</h1>
+                    <h1 class="text-xl md:text-2xl font-bold text-teal-700">住院醫師工時改革相關文獻</h1>
                 </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-slate-700 hover:text-teal-700 focus:outline-none focus:text-teal-700">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- Desktop navigation -->
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4 nav-container">
                         <button data-target="dilemma" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 border-b-2 border-transparent">核心影響</button>
@@ -97,6 +114,15 @@
                 </div>
             </div>
         </nav>
+        <!-- Mobile navigation menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-slate-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 mobile-nav-container">
+                <button data-target="dilemma" class="mobile-nav-link block px-3 py-2 text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-slate-50 rounded-md w-full text-left">核心影響</button>
+                <button data-target="solutions" class="mobile-nav-link block px-3 py-2 text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-slate-50 rounded-md w-full text-left">解決方案</button>
+                <button data-target="policies" class="mobile-nav-link block px-3 py-2 text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-slate-50 rounded-md w-full text-left">各國政策</button>
+                <button data-target="education" class="mobile-nav-link block px-3 py-2 text-base font-medium text-slate-700 hover:text-teal-700 hover:bg-slate-50 rounded-md w-full text-left">教育轉型</button>
+            </div>
+        </div>
     </header>
 
     <main class="flex-grow main-container">
@@ -127,6 +153,11 @@
                         </div>
                     </div>
                 </div>
+                <footer class="mt-16 pt-8 border-t border-slate-200">
+                    <div class="container mx-auto">
+                        <p class="text-center text-sm text-slate-500">奇美醫院一般醫學科與實證醫學暨醫療政策中心製</p>
+                    </div>
+                </footer>
             </section>
 
             <section id="solutions" class="page">
@@ -145,6 +176,11 @@
                         </div>
                     </div>
                 </div>
+                <footer class="mt-16 pt-8 border-t border-slate-200">
+                    <div class="container mx-auto">
+                        <p class="text-center text-sm text-slate-500">奇美醫院一般醫學科與實證醫學暨醫療政策中心製</p>
+                    </div>
+                </footer>
             </section>
 
             <section id="policies" class="page">
@@ -171,6 +207,11 @@
                         </div>
                     </div>
                 </div>
+                <footer class="mt-16 pt-8 border-t border-slate-200">
+                    <div class="container mx-auto">
+                        <p class="text-center text-sm text-slate-500">奇美醫院一般醫學科與實證醫學暨醫療政策中心製</p>
+                    </div>
+                </footer>
             </section>
             
             <section id="education" class="page">
@@ -222,6 +263,11 @@
                         </div>
                     </div>
                 </div>
+                <footer class="mt-16 pt-8 border-t border-slate-200">
+                    <div class="container mx-auto">
+                        <p class="text-center text-sm text-slate-500">奇美醫院一般醫學科與實證醫學暨醫療政策中心製</p>
+                    </div>
+                </footer>
             </section>
         </div>
     </main>
@@ -417,28 +463,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Page Navigation Logic
     const navContainer = document.querySelector('.nav-container');
+    const mobileNavContainer = document.querySelector('.mobile-nav-container');
     const pageContainer = document.getElementById('page-container');
     const pages = document.querySelectorAll('.page');
     const navLinks = document.querySelectorAll('.nav-link');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    // Mobile menu toggle
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
 
     function navigateToPage(pageIndex) {
         pageContainer.style.transform = `translateX(-${pageIndex * 100}%)`;
         navLinks.forEach((link, index) => {
             link.classList.toggle('active', index === pageIndex);
         });
+        mobileNavLinks.forEach((link, index) => {
+            link.classList.toggle('active', index === pageIndex);
+        });
+        // Close mobile menu after navigation
+        mobileMenu.classList.add('hidden');
     }
 
-    navContainer.addEventListener('click', (e) => {
-        const navLink = e.target.closest('.nav-link');
-        if (navLink) {
-            const targetId = navLink.dataset.target;
-            const targetPage = document.getElementById(targetId);
-            const pageIndex = Array.from(pages).indexOf(targetPage);
-            if (pageIndex !== -1) {
-                navigateToPage(pageIndex);
+    // Desktop navigation
+    if (navContainer) {
+        navContainer.addEventListener('click', (e) => {
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) {
+                const targetId = navLink.dataset.target;
+                const targetPage = document.getElementById(targetId);
+                const pageIndex = Array.from(pages).indexOf(targetPage);
+                if (pageIndex !== -1) {
+                    navigateToPage(pageIndex);
+                }
             }
-        }
-    });
+        });
+    }
+
+    // Mobile navigation
+    if (mobileNavContainer) {
+        mobileNavContainer.addEventListener('click', (e) => {
+            const navLink = e.target.closest('.mobile-nav-link');
+            if (navLink) {
+                const targetId = navLink.dataset.target;
+                const targetPage = document.getElementById(targetId);
+                const pageIndex = Array.from(pages).indexOf(targetPage);
+                if (pageIndex !== -1) {
+                    navigateToPage(pageIndex);
+                }
+            }
+        });
+    }
 
     // Set initial state
     navigateToPage(0);
